@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Remix XV Años - Lirio Quetzalli Herrera",
+  "description": "Invitación digital de XV Años de Lirio Quetzalli Herrera. Ceremonia, recepción, itinerario, galería de fotos y confirmación RSVP.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
