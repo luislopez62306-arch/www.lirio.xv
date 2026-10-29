@@ -28,26 +28,7 @@ export interface PaseItem {
   createdAt: string;
 }
 
-const DEFAULT_PASSES: PaseItem[] = [
-  {
-    id: 'pass-1',
-    guestName: 'Familia Gil Corral',
-    passesCount: 4,
-    tableNumber: 'Mesa de Honor',
-    accessType: 'Misa y Recepción',
-    personalNote: 'Será un honor tenerlos en nuestra mesa principal.',
-    createdAt: '2026-10-18'
-  },
-  {
-    id: 'pass-2',
-    guestName: 'Ing. Roberto Soto y Familia',
-    passesCount: 3,
-    tableNumber: 'Mesa 4',
-    accessType: 'Misa y Recepción',
-    personalNote: 'Con mucho aprecio para ustedes.',
-    createdAt: '2026-10-19'
-  }
-];
+const DEFAULT_PASSES: PaseItem[] = [];
 
 interface GeneradorPasesProps {
   isOpen: boolean;
@@ -62,10 +43,13 @@ export const GeneradorPases: React.FC<GeneradorPasesProps> = ({
 }) => {
   const [passes, setPasses] = useState<PaseItem[]>(() => {
     try {
-      const stored = localStorage.getItem('lirio_xv_generated_passes');
+      localStorage.removeItem('lirio_xv_generated_passes');
+      const stored = localStorage.getItem('lirio_xv_generated_passes_v2');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          return parsed.filter((p: PaseItem) => p.id !== 'pass-1' && p.id !== 'pass-2');
+        }
       }
     } catch (e) {
       console.warn(e);
@@ -85,7 +69,7 @@ export const GeneradorPases: React.FC<GeneradorPasesProps> = ({
 
   useEffect(() => {
     try {
-      localStorage.setItem('lirio_xv_generated_passes', JSON.stringify(passes));
+      localStorage.setItem('lirio_xv_generated_passes_v2', JSON.stringify(passes));
     } catch (e) {
       console.warn(e);
     }
@@ -358,13 +342,13 @@ export const GeneradorPases: React.FC<GeneradorPasesProps> = ({
                 {/* TARJETÓN DE GALA DE ALTA COSTURA */}
                 {(() => {
                   const targetPass: PaseItem = previewPass || passes[0] || {
-                    id: 'sample',
-                    guestName: guestName || 'Familia Ejemplo',
+                    id: 'preview',
+                    guestName: guestName.trim() || 'Nombre del Invitado',
                     passesCount: passesCount,
-                    tableNumber: tableNumber || 'Mesa VIP',
+                    tableNumber: tableNumber.trim() || undefined,
                     accessType: accessType,
-                    personalNote: personalNote || 'Será un gran honor contar con tu grata presencia.',
-                    createdAt: '2026-10-20'
+                    personalNote: personalNote.trim() || undefined,
+                    createdAt: '18 Dic 2026'
                   };
 
                   return (
@@ -484,8 +468,17 @@ export const GeneradorPases: React.FC<GeneradorPasesProps> = ({
             </div>
 
             {filteredPasses.length === 0 ? (
-              <div className="text-center py-8 text-xs text-[#4E216E]/60 italic">
-                No se encontraron pases con ese criterio.
+              <div className="text-center py-8 text-xs text-[#4E216E]/70 space-y-1.5">
+                <p className="font-['Cormorant_Garamond'] text-lg font-bold text-[#4E216E]">
+                  {passes.length === 0
+                    ? 'Aún no hay pases asignados'
+                    : 'No se encontraron pases con ese criterio'}
+                </p>
+                <p className="text-[11px] text-[#4E216E]/60 max-w-xs mx-auto font-light">
+                  {passes.length === 0
+                    ? 'Usa el formulario de la izquierda para registrar a tus invitados y generar sus boletos digitales VIP.'
+                    : 'Intenta con otro nombre o mesa.'}
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-[#D0BCF2]/30 max-h-72 overflow-y-auto pr-1">

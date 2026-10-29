@@ -11,6 +11,8 @@ export const ConfirmacionAsistencia: React.FC<ConfirmacionAsistenciaProps> = ({ 
   const [companions, setCompanions] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<'both' | 'ceremony' | 'reception'>('both');
   const [note, setNote] = useState('');
+  const [publishToWall, setPublishToWall] = useState(true);
+  const [hasPublishedDedication, setHasPublishedDedication] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [assignedPassInfo, setAssignedPassInfo] = useState<{ guest?: string; table?: string } | null>(null);
@@ -43,6 +45,49 @@ export const ConfirmacionAsistencia: React.FC<ConfirmacionAsistenciaProps> = ({ 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    // Si el usuario escribió un mensaje de dedicatoria, guardarlo en la invitación
+    if (note.trim() && publishToWall) {
+      const wishPayload = {
+        author: name.trim(),
+        relation: companions.trim()
+          ? `Invitado(a) + ${companions.trim()}`
+          : (attending === 'yes' ? 'Confirmó Asistencia ✨' : 'Invitado(a)'),
+        message: note.trim(),
+        icon: attending === 'yes' ? '🥂' : '🌸',
+        fromRsvp: true,
+        attendance: attending
+      };
+
+      fetch('/api/wishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(wishPayload)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.wish) {
+            setHasPublishedDedication(true);
+            window.dispatchEvent(new CustomEvent('xv-wish-added', { detail: data.wish }));
+          }
+        })
+        .catch(err => {
+          console.warn("Error enviando dedicatoria al servidor:", err);
+          // Respaldo en localStorage
+          try {
+            const fallbackWish = {
+              id: Date.now().toString(),
+              ...wishPayload,
+              date: 'Hoy',
+              likes: 1
+            };
+            const existing = JSON.parse(localStorage.getItem('lirio_xv_wishes_v2') || '[]');
+            localStorage.setItem('lirio_xv_wishes_v2', JSON.stringify([fallbackWish, ...existing]));
+            setHasPublishedDedication(true);
+            window.dispatchEvent(new CustomEvent('xv-wish-added', { detail: fallbackWish }));
+          } catch (storageErr) {}
+        });
+    }
 
     let text = '';
     if (attending === 'yes') {
@@ -83,7 +128,7 @@ export const ConfirmacionAsistencia: React.FC<ConfirmacionAsistenciaProps> = ({ 
   };
 
   return (
-    <section className="pt-16 pb-12 border-t border-[#D0BCF2]/50 relative">
+    <section id="rsvp" className="pt-16 pb-12 border-t border-[#D0BCF2]/50 relative scroll-mt-10">
       {/* Toast Notificación Temporal: ¡Gracias por confirmar! */}
       {showToast && (
         <div
@@ -189,6 +234,28 @@ export const ConfirmacionAsistencia: React.FC<ConfirmacionAsistenciaProps> = ({ 
                     {selectedEvent === 'both' ? 'Misa y Recepción' : selectedEvent === 'ceremony' ? 'Solo Misa' : 'Solo Recepción'}
                   </span>
                 </div>
+              </div>
+            )}
+
+            {/* Confirmación visual de la dedicatoria publicada en la invitación */}
+            {(hasPublishedDedication || note.trim()) && (
+              <div className="bg-[#FAF7FE] border border-[#D3B272]/70 rounded-2xl p-4 max-w-sm mx-auto text-left shadow-sm space-y-2 animate-fade-in">
+                <div className="flex items-center gap-2 text-[#4E216E] text-xs font-semibold">
+                  <Sparkles size={14} className="text-[#D3B272]" />
+                  <span>¡Tu dedicatoria se publicó en la invitación!</span>
+                </div>
+                {note.trim() && (
+                  <p className="font-['Cormorant_Garamond'] italic text-sm text-[#4E216E]/90 bg-white/70 p-2.5 rounded-xl border border-[#D0BCF2]/40">
+                    "{note.trim()}"
+                  </p>
+                )}
+                <a
+                  href="#dedicatorias"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#8B6E32] hover:text-[#4E216E] font-medium transition-colors pt-1 underline underline-offset-2"
+                >
+                  <span>Ver todas las dedicatorias en la invitación</span>
+                  <span>↓</span>
+                </a>
               </div>
             )}
 
@@ -345,13 +412,33 @@ export const ConfirmacionAsistencia: React.FC<ConfirmacionAsistenciaProps> = ({ 
                 rows={2}
                 placeholder={
                   attending === 'yes'
-                    ? 'Ej. ¡Con muchas ganas de celebrar! / Restricciones alimenticias...'
-                    : 'Ej. Te deseo una noche maravillosa y llena de bendiciones...'
+                    ? 'Ej. ¡Muchas felicidades hermosa Lirio! Que Dios te bendiga siempre...'
+                    : 'Ej. Te deseo una noche maravillosa y llena de bendiciones, te queremos mucho...'
                 }
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 className="w-full bg-[#F8F4FD] border border-[#D0BCF2]/70 rounded-xl px-4 py-2.5 text-xs font-light text-[#4E216E] placeholder:text-[#4E216E]/40 focus:outline-none focus:border-[#4E216E] transition-all resize-none"
               ></textarea>
+
+              {/* Casilla para publicar la dedicatoria en la invitación */}
+              {note.trim() && (
+                <label className="flex items-start gap-2.5 mt-2.5 p-3 rounded-xl bg-[#FAF7FE] border border-[#D3B272]/50 cursor-pointer select-none transition-all hover:bg-[#F3ECFB]">
+                  <input
+                    type="checkbox"
+                    checked={publishToWall}
+                    onChange={e => setPublishToWall(e.target.checked)}
+                    className="mt-0.5 accent-[#4E216E] w-4 h-4 rounded cursor-pointer"
+                  />
+                  <div className="text-xs text-[#4E216E]">
+                    <span className="font-semibold flex items-center gap-1.5 text-[#4E216E]">
+                      <Sparkles size={12} className="text-[#D3B272]" /> Publicar también esta dedicatoria en la invitación
+                    </span>
+                    <span className="text-[11px] text-[#4E216E]/70 block mt-0.5 font-light leading-snug">
+                      Tus palabras aparecerán en el Libro de Dedicatorias para que Lirio y todos los invitados puedan verlas.
+                    </span>
+                  </div>
+                </label>
+              )}
             </div>
 
             {/* 6. Botón de Enviar Confirmación */}

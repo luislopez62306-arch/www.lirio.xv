@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Church, Wine, MapPin, Shirt, Mail, Music, Pause, Heart, X, ZoomIn, Shuffle, CalendarPlus, Calendar, Sparkles } from 'lucide-react';
+import { Church, Wine, MapPin, Shirt, Mail, Music, Pause, Heart, X, ZoomIn, Shuffle, CalendarPlus, Calendar, Sparkles, MessageSquareHeart } from 'lucide-react';
 import { SeccionDeseos } from './SeccionDeseos.tsx';
 import { ConfirmacionAsistencia } from './ConfirmacionAsistencia.tsx';
 import { GeneradorPases } from './GeneradorPases.tsx';
@@ -1688,8 +1688,26 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-16 space-y-24">
+      <main className="max-w-3xl mx-auto px-6 py-12 space-y-24">
         
+        {/* ENLACES RÁPIDOS Y DESTACADOS DE LA INVITACIÓN */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pb-2 pt-1 animate-fade-in">
+          <a
+            href="#dedicatorias"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/90 hover:bg-white text-[#4E216E] border border-[#D3B272] shadow-xs hover:shadow-md transition-all text-xs uppercase tracking-wider font-semibold group cursor-pointer"
+          >
+            <MessageSquareHeart size={15} className="text-[#D3B272] group-hover:scale-110 transition-transform" />
+            <span>Libro de Dedicatorias</span>
+          </a>
+          <a
+            href="#rsvp"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#4E216E] to-[#631f8f] hover:from-[#3d1858] hover:to-[#4E216E] text-white shadow-xs hover:shadow-md transition-all text-xs uppercase tracking-wider font-semibold cursor-pointer"
+          >
+            <Sparkles size={14} className="text-[#D3B272]" />
+            <span>Confirmar Asistencia</span>
+          </a>
+        </div>
+
         {/* 2. FRASE Y PADRES */}
         <ScrollFadeSection tilt="left">
           <section className="text-center space-y-12">
